@@ -13,6 +13,8 @@ import SemaphoreContext from "../context/SemaphoreContext"
 import IconAddCircleFill from "../icons/IconAddCircleFill"
 import IconRefreshLine from "../icons/IconRefreshLine"
 
+import {QRCodeSVG} from 'qrcode.react';
+
 const { publicRuntimeConfig: env } = getNextConfig()
 
 export default function ProofsPage() {
@@ -21,6 +23,8 @@ export default function ProofsPage() {
     const { _users, _feedback, refreshFeedback, addFeedback } = useContext(SemaphoreContext)
     const [_loading, setLoading] = useBoolean()
     const [_identity, setIdentity] = useState<Identity>()
+
+    const [ carryData, setCarryData ] = useState<any>({});
 
     useEffect(() => {
         const identityString = localStorage.getItem("identity")
@@ -39,12 +43,17 @@ export default function ProofsPage() {
         }
     }, [_feedback])
 
+    useEffect(() => {
+        console.log(carryData);
+    }, [carryData]);
+
     const sendFeedback = useCallback(async () => {
         if (!_identity) {
             return
         }
 
-        const feedback = prompt("Please enter your feedback:")
+        // const feedback = prompt("Please enter your feedback:")
+        const feedback = "dumb"
 
         if (feedback && _users) {
             setLoading.on()
@@ -64,38 +73,13 @@ export default function ProofsPage() {
                 )
 
                 let response: any
+                carryData.feedback = signal;
+                carryData.proof = proof;
+                carryData.merkleTreeRoot = merkleTreeRoot;
+                carryData.nullifierHash = nullifierHash;
+                setCarryData((carryData: any) => ({ ...carryData, feedback: signal, proof, merkleTreeRoot, nullifierHash }));
 
-                if (env.OPENZEPPELIN_AUTOTASK_WEBHOOK) {
-                    response = await fetch(env.OPENZEPPELIN_AUTOTASK_WEBHOOK, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            abi: Feedback.abi,
-                            address: env.FEEDBACK_CONTRACT_ADDRESS,
-                            functionName: "sendFeedback",
-                            functionParameters: [signal, merkleTreeRoot, nullifierHash, proof]
-                        })
-                    })
-                } else {
-                    response = await fetch("api/feedback", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            feedback: signal,
-                            merkleTreeRoot,
-                            nullifierHash,
-                            proof
-                        })
-                    })
-                }
-
-                if (response.status === 200) {
-                    addFeedback(feedback)
-
-                    setLogs(`Your feedback was posted 🎉`)
-                } else {
-                    setLogs("Some error occurred, please try again!")
-                }
+                setLogs(`Your carryData was generated 🎉`)
             } catch (error) {
                 console.error(error)
 
@@ -150,9 +134,17 @@ export default function ProofsPage() {
             {_feedback.length > 0 && (
                 <VStack spacing="3" align="left">
                     {_feedback.map((f, i) => (
-                        <HStack key={i} p="3" borderWidth={1}>
+                        <VStack key={i} p="3" borderWidth={1}>
                             <Text>{f}</Text>
-                        </HStack>
+                            <QRCodeSVG
+                                value={`${carryData.feedback} ${carryData.proof} ${carryData.merkleTreeRoot} ${carryData.nullifierHash}`}
+                                size={256}
+                                bgColor={"#ffffff"}
+                                fgColor={"#000000"}
+                                level={"L"}
+                                includeMargin={false}
+                            />
+                        </VStack>
                     ))}
                 </VStack>
             )}
