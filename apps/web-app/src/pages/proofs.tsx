@@ -78,6 +78,7 @@ export default function ProofsPage() {
                 carryData.merkleTreeRoot = merkleTreeRoot;
                 carryData.nullifierHash = nullifierHash;
                 setCarryData((carryData: any) => ({ ...carryData, feedback: signal, proof, merkleTreeRoot, nullifierHash }));
+                addFeedback(feedback)
 
                 setLogs(`Your carryData was generated 🎉`)
             } catch (error) {
@@ -127,11 +128,11 @@ export default function ProofsPage() {
                     isDisabled={_loading}
                     leftIcon={<IconAddCircleFill />}
                 >
-                    Send Feedback
+                    Generate Proof
                 </Button>
             </Box>
 
-            {_feedback.length > 0 && (
+            {_feedback.length >= 0 && (
                 <VStack spacing="3" align="left">
                     {_feedback.map((f, i) => (
                         <VStack key={i} p="3" borderWidth={1}>
